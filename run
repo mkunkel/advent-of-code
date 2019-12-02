@@ -1,0 +1,19 @@
+#! /usr/bin/env ruby
+raise ArgumentError, 'Must provide day number as argument' unless ARGV[0]
+DAY = ARGV[0].rjust(2, '0')
+
+languages = [
+  { name: 'Ruby', extension: '.rb'},
+  { name: 'Python', extension: '.py'},
+  { name: 'Elixir', extension: '.exs'}
+]
+
+
+[1, 2].each do |part|
+  languages.each do |language|
+    file = "day#{DAY}/#{part}#{language[:extension]}"
+    lines = File.read(file).split("\n")
+    output = lines.count > 1 ? `#{file}` : "Not completed"
+    puts "#{language[:name].ljust(6, ' ')} part #{part}: #{output}"
+  end
+end
