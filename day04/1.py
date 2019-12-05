@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import re
 def is_ascending(string):
     return ''.join(sorted(string)) == string
@@ -18,4 +18,4 @@ for x in range(begin, finish + 1):
     if is_valid(x):
         count += 1
 
-print count
+print(count)

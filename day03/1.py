@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 from operator import methodcaller
 
 def to_dict(move):
@@ -30,8 +30,8 @@ def to_paths(line):
     return to_path(directions)
 
 def intersection(lst):
-    tup1 = map(tuple, lst[0])
-    tup2 = map(tuple, lst[1])
+    tup1 = list(map(tuple, lst[0]))
+    tup2 = list(map(tuple, lst[1]))
     return list(map(list, set(tup1).intersection(tup2)))
 
 def distance(coords):
@@ -46,6 +46,6 @@ file = open("day03/input.txt", "r")
 lines = file.read().splitlines()
 file.close()
 
-paths = map(to_paths, lines)
+paths = list(map(to_paths, lines))
 
-print closest(paths)
+print(closest(paths))

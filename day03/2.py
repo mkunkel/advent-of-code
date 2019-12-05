@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 from operator import methodcaller
 
 def to_dict(move):
@@ -46,6 +46,6 @@ file = open("day03/input.txt", "r")
 lines = file.read().splitlines()
 file.close()
 
-paths = map(to_paths, lines)
+paths = list(map(to_paths, lines))
 
-print closest(paths)
+print(closest(paths))

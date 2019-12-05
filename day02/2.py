@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 def chunks(codes, size):
     for code in range(0, len(codes), size):
@@ -7,7 +7,7 @@ def chunks(codes, size):
 def process(n, v):
     file = open("day02/input.txt", "r")
     codes = file.read().split(",")
-    codes = map(int, codes)
+    codes = list(map(int, codes))
 
     codes[1] = n
     codes[2] = v
@@ -32,7 +32,7 @@ for noun in numbers:
         value = process(noun, verb)
 
         if value == 19690720:
-            print "Value: %s" % value
-            print "Noun: %s" % noun
-            print "Verb: %s" % verb
-            print "Total: %s" % str(100 * noun + verb)
+            print("Value: %s" % value)
+            print("Noun: %s" % noun)
+            print("Verb: %s" % verb)
+            print("Total: %s" % str(100 * noun + verb))

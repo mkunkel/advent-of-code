@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 
 def chunks(codes, size):
     for code in range(0, len(codes), size):
@@ -14,13 +14,13 @@ def process(codes):
         elif op[0] == 2:
             codes[op[3]] = codes[op[1]] * codes[op[2]]
         elif op[0] == 99:
-            print codes[0]
+            print(codes[0])
             exit()
-    print codes
+    print(codes)
 
 file = open("day02/input.txt", "r")
 codes = file.read().split(",")
-codes = map(int, codes)
+codes = list(map(int, codes))
 
 codes[1] = 12
 codes[2] = 2

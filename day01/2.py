@@ -1,4 +1,4 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 import math
 file = open("day01/input.txt", "r")
 modules = file.read().splitlines()
