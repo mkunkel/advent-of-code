@@ -1,13 +1,14 @@
 #! /usr/bin/env ruby
 require 'pry'
-class Amplifier
+class Intcode
   attr_reader :completed, :output
 
-  def initialize(file, input_ids)
+  def initialize(file, input_ids = [])
     @file = file
     @input_ids = [*input_ids]
     @pointer = 0
     @completed = false
+    @relative_base = 0
     @input = File.read(@file).split(',').map(&:to_i)
   end
 
@@ -25,7 +26,6 @@ class Amplifier
 
   def next_instruction
     instruction = to_instruction
-
     return complete if instruction[:opcode] == 99
     result = send("code_#{instruction[:opcode]}".to_sym, instruction)
     next_instruction unless @waiting
@@ -46,32 +46,35 @@ class Amplifier
     num = @input[@pointer]
     @pointer += 1
     pos_mode, verb_mode, noun_mode, *opcode = num.to_s.rjust(5, '0').chars
-
+    # pos_mode = pos_mode.to_i == 0 ? pos_mode : 0
+    # pos_mode = pos_mode.to_i == 1 ? 1 : pos_mode
+    # puts num.to_s
     {
       noun_mode: noun_mode.to_i,
       verb_mode: verb_mode.to_i,
-      pos_mode: pos_mode.to_i,
+      pos_mode: pos_mode.to_i == 0 ? 1 : 0,
       opcode: opcode.join.to_i
     }
   end
 
   def code_1(instruction)
     noun, verb, pos = @input[@pointer, 3]
-    @pointer += 3
 
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-    pos = instruction[:pos_mode] == 1 ? @input[pos] : pos
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
+
+    @pointer += 3
     @input[pos] = noun + verb
   end
 
   def code_2(instruction)
     noun, verb, pos = @input[@pointer, 3]
-    @pointer += 3
 
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-    pos = instruction[:pos_mode] == 1 ? @input[pos] : pos
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
+    @pointer += 3
 
     @input[pos] = noun * verb
   end
@@ -81,6 +84,7 @@ class Amplifier
     return wait if @input_ids.empty?
     input_id = @input_ids.shift
 
+    # pos = parameter_mode(instruction[:verb_mode], pos)
 
     @pointer += 1
     @input[pos] = input_id.to_i
@@ -88,20 +92,21 @@ class Amplifier
 
   def code_4(instruction)
     pos = @input[@pointer]
-    pos = instruction[:noun_mode] == 0 ? @input[pos] : pos
+    pos = parameter_mode(instruction[:noun_mode], pos)
     @pointer += 1
     @output = pos
+    puts @output
   end
 
   def code_5(instruction)
     #jump-if-true: if the first parameter is non-zero, it sets the instruction pointer to
     #the value from the second parameter. Otherwise, it does nothing.
     noun, verb = @input[@pointer, 2]
+
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
     @pointer += 2
-
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-
     @pointer = verb unless noun == 0
   end
 
@@ -109,11 +114,11 @@ class Amplifier
     #jump-if-false: if the first parameter is zero, it sets the instruction pointer to
     #the value from the second parameter. Otherwise, it does nothing.
     noun, verb = @input[@pointer, 2]
+
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
     @pointer += 2
-
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-
     @pointer = verb if noun == 0
   end
 
@@ -121,11 +126,11 @@ class Amplifier
     #less than: if the first parameter is less than the second parameter, it stores 1 in
     #the position given by the third parameter. Otherwise, it stores 0.
     noun, verb, pos = @input[@pointer, 3]
-    @pointer += 3
 
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-    pos = instruction[:pos_mode] == 1 ? @input[pos] : pos
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
+    @pointer += 3
 
     @input[pos] = noun < verb ? 1 : 0
   end
@@ -134,12 +139,32 @@ class Amplifier
     #equals: if the first parameter is equal to the second parameter, it stores 1 in
     #the position given by the third parameter. Otherwise, it stores 0.
     noun, verb, pos = @input[@pointer, 3]
+
+    noun = parameter_mode(instruction[:noun_mode], noun)
+    verb = parameter_mode(instruction[:verb_mode], verb)
+    pos = parameter_mode(instruction[:pos_mode], pos)
     @pointer += 3
 
-    noun = instruction[:noun_mode] == 0 ? @input[noun] : noun
-    verb = instruction[:verb_mode] == 0 ? @input[verb] : verb
-    pos = instruction[:pos_mode] == 1 ? @input[pos] : pos
-
     @input[pos] = noun == verb ? 1 : 0
+  end
+
+  def code_9(instruction)
+    #adjusts the relative base by the value of the first parameter
+    offset = @input[@pointer]
+    @pointer += 1
+    # binding.pry
+    offset = parameter_mode(instruction[:noun_mode], offset)
+    @relative_base += offset
+  end
+
+  def parameter_mode(mode, number)
+    case mode
+    when 0
+      @input[number] || 0
+    when 1
+      number
+    when 2
+      @input[number + @relative_base] || 0
+    end
   end
 end
