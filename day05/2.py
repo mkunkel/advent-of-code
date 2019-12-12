@@ -34,6 +34,7 @@ def to_instruction(codes, pointer, input_id):
     }
 
 def code_1(codes, instruction):
+    print('1')
     noun = codes[instruction["pointer"]]
     verb = codes[instruction["pointer"] + 1]
     pos = codes[instruction["pointer"] + 2]
@@ -47,6 +48,7 @@ def code_1(codes, instruction):
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_2(codes, instruction):
+    print('2')
     noun = codes[instruction["pointer"]]
     verb = codes[instruction["pointer"] + 1]
     pos = codes[instruction["pointer"] + 2]
@@ -60,35 +62,46 @@ def code_2(codes, instruction):
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_3(codes, instruction):
+    print('3')
     pos = codes[instruction["pointer"]]
     instruction["pointer"] += 1
     codes[pos] = instruction["input_id"]
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_4(codes, instruction):
+    print('4')
     pos = codes[instruction["pointer"]]
     instruction["pointer"] += 1
     print(codes[pos])
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_5(codes, instruction):
+    print('5')
+    print(codes)
     print(instruction)
-    pos = codes[instruction["pointer"]]
-    value = codes[pos] if instruction["mode_1"] == 0 else pos
-    instruction["pointer"] += 1
+    par_1 = codes[instruction["pointer"]] # 20
+    value = codes[par_1] if instruction["mode_1"] == 0 else par_1 # 98
+    instruction["pointer"] += 1 # 8
+    print(value)
     if value != 0:
+        par_2 = codes[instruction["pointer"]] # 22
+        value = codes[par_2] if instruction["mode_2"] == 1 else par_2
         instruction["pointer"] = value
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_6(codes, instruction):
-    pos = codes[instruction["pointer"]]
-    value = codes[pos] if instruction["mode_1"] == 0 else pos
-    instruction["pointer"] += 1
+    print('6')
+    par_1 = codes[instruction["pointer"]]
+    value = codes[par_1] if instruction["mode_1"] == 0 else par_1
+    instruction["pointer"] += 2
     if value == 0:
+        par_2 = codes[instruction["pointer"]]
+        value = codes[par_2] if instruction["mode_2"] == 1 else par_2
         instruction["pointer"] = value
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_7(codes, instruction):
+    print('7')
     first = codes[instruction["pointer"]]
     second = codes[instruction["pointer"] + 1]
     pos = codes[instruction["pointer"] + 2]
@@ -96,12 +109,13 @@ def code_7(codes, instruction):
 
     first = codes[first] if instruction["mode_1"] == 0 else first
     second = codes[second] if instruction["mode_2"] == 0 else second
-    pos = codes[second] if instruction["mode_3"] == 0 else second
+    pos = codes[second] if instruction["mode_3"] == 1 else pos
     value = 1 if first < second else 0
     codes[pos] = value
     return { "codes": codes, "pointer": instruction["pointer"] }
 
 def code_8(codes, instruction):
+    print('8')
     first = codes[instruction["pointer"]]
     second = codes[instruction["pointer"] + 1]
     pos = codes[instruction["pointer"] + 2]
@@ -109,11 +123,11 @@ def code_8(codes, instruction):
 
     first = codes[first] if instruction["mode_1"] == 0 else first
     second = codes[second] if instruction["mode_2"] == 0 else second
-    pos = codes[pos] if instruction["mode_3"] == 0 else pos
-    value = 1 if first > second else 0
+    pos = codes[pos] if instruction["mode_3"] == 1 else pos
+    value = 1 if first == second else 0
     codes[pos] = value
     return { "codes": codes, "pointer": instruction["pointer"] }
 
-input_id = 6
+input_id = 5
 
 process(input_id)
