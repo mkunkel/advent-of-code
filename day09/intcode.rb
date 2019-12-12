@@ -3,28 +3,34 @@ require 'pry'
 class Intcode
   attr_reader :completed, :output
 
-  def initialize(file, input_ids = [])
+  def initialize(file, input_ids = [], verbose = false)
     @file = file
     @input_ids = [*input_ids]
     @pointer = 0
     @completed = false
     @relative_base = 0
-    @input = File.read(@file).split(',').map(&:to_i)
+    @input = [File.read(@file).split(',').map(&:to_i)]
+    @verbose = verbose
   end
 
   def process
     next_instruction
   end
 
-  def add_input(input)
-    @input_ids << input
+  def add_input(input_id)
+    @input_ids << input_id
     @waiting = false
     next_instruction
   end
 
   private
 
+  def input
+    @input.last
+  end
+
   def next_instruction
+    @input << input.dup
     instruction = to_instruction
     return complete if instruction[:opcode] == 99
     result = send("code_#{instruction[:opcode]}".to_sym, instruction)
@@ -43,65 +49,63 @@ class Intcode
   end
 
   def to_instruction
-    num = @input[@pointer]
+    num = input[@pointer]
     @pointer += 1
     pos_mode, verb_mode, noun_mode, *opcode = num.to_s.rjust(5, '0').chars
-    # pos_mode = pos_mode.to_i == 0 ? pos_mode : 0
-    # pos_mode = pos_mode.to_i == 1 ? 1 : pos_mode
-    # puts num.to_s
+
     {
       noun_mode: noun_mode.to_i,
       verb_mode: verb_mode.to_i,
-      pos_mode: pos_mode.to_i == 0 ? 1 : 0,
+      pos_mode: pos_mode.to_i,
       opcode: opcode.join.to_i
     }
   end
 
   def code_1(instruction)
-    noun, verb, pos = @input[@pointer, 3]
+    noun, verb, pos = input[@pointer, 3]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
-    pos = parameter_mode(instruction[:pos_mode], pos)
+    pos = write_parameter_mode(instruction[:pos_mode], pos)
 
     @pointer += 3
-    @input[pos] = noun + verb
+    input[pos] = noun + verb
   end
 
   def code_2(instruction)
-    noun, verb, pos = @input[@pointer, 3]
+    noun, verb, pos = input[@pointer, 3]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
-    pos = parameter_mode(instruction[:pos_mode], pos)
+    pos = write_parameter_mode(instruction[:pos_mode], pos)
     @pointer += 3
 
-    @input[pos] = noun * verb
+    input[pos] = noun * verb
   end
 
   def code_3(instruction)
-    pos = @input[@pointer]
+    pos = input[@pointer]
     return wait if @input_ids.empty?
     input_id = @input_ids.shift
-
-    # pos = parameter_mode(instruction[:verb_mode], pos)
+    pos = write_parameter_mode(instruction[:verb_mode], pos)
 
     @pointer += 1
-    @input[pos] = input_id.to_i
+    input[pos] = input_id.to_i
   end
 
   def code_4(instruction)
-    pos = @input[@pointer]
+    pos = input[@pointer]
     pos = parameter_mode(instruction[:noun_mode], pos)
     @pointer += 1
     @output = pos
-    puts @output
+    # @input.each { |inp| puts inp.to_s }
+    puts @output if @verbose
   end
 
   def code_5(instruction)
     #jump-if-true: if the first parameter is non-zero, it sets the instruction pointer to
     #the value from the second parameter. Otherwise, it does nothing.
-    noun, verb = @input[@pointer, 2]
+    noun, verb = input[@pointer, 2]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
@@ -113,11 +117,11 @@ class Intcode
   def code_6(instruction)
     #jump-if-false: if the first parameter is zero, it sets the instruction pointer to
     #the value from the second parameter. Otherwise, it does nothing.
-    noun, verb = @input[@pointer, 2]
+    noun, verb = input[@pointer, 2]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
-    pos = parameter_mode(instruction[:pos_mode], pos)
+    pos = write_parameter_mode(instruction[:pos_mode], pos)
     @pointer += 2
     @pointer = verb if noun == 0
   end
@@ -125,34 +129,33 @@ class Intcode
   def code_7(instruction)
     #less than: if the first parameter is less than the second parameter, it stores 1 in
     #the position given by the third parameter. Otherwise, it stores 0.
-    noun, verb, pos = @input[@pointer, 3]
+    noun, verb, pos = input[@pointer, 3]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
-    pos = parameter_mode(instruction[:pos_mode], pos)
+    pos = write_parameter_mode(instruction[:pos_mode], pos)
     @pointer += 3
 
-    @input[pos] = noun < verb ? 1 : 0
+    input[pos] = noun < verb ? 1 : 0
   end
 
   def code_8(instruction)
     #equals: if the first parameter is equal to the second parameter, it stores 1 in
     #the position given by the third parameter. Otherwise, it stores 0.
-    noun, verb, pos = @input[@pointer, 3]
+    noun, verb, pos = input[@pointer, 3]
 
     noun = parameter_mode(instruction[:noun_mode], noun)
     verb = parameter_mode(instruction[:verb_mode], verb)
-    pos = parameter_mode(instruction[:pos_mode], pos)
+    pos = write_parameter_mode(instruction[:pos_mode], pos)
     @pointer += 3
 
-    @input[pos] = noun == verb ? 1 : 0
+    input[pos] = noun == verb ? 1 : 0
   end
 
   def code_9(instruction)
     #adjusts the relative base by the value of the first parameter
-    offset = @input[@pointer]
+    offset = input[@pointer]
     @pointer += 1
-    # binding.pry
     offset = parameter_mode(instruction[:noun_mode], offset)
     @relative_base += offset
   end
@@ -160,11 +163,22 @@ class Intcode
   def parameter_mode(mode, number)
     case mode
     when 0
-      @input[number] || 0
+      input[number] || 0
     when 1
       number
     when 2
-      @input[number + @relative_base] || 0
+      input[number + @relative_base] || 0
+    end
+  end
+
+  def write_parameter_mode(mode, number)
+    case mode
+    when 0
+      number || 0
+    when 1
+      number
+    when 2
+      (number + @relative_base) || 0
     end
   end
 end

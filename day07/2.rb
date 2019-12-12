@@ -1,9 +1,9 @@
 #! /usr/bin/env ruby
-require_relative 'amplifier_loop'
+require_relative '../day09/intcode'
 require 'pry'
 
 def create_loop(phases)
-  phases.map { |phase| Amplifier.new('day07/input.txt', phase) }
+  phases.map { |phase| Intcode.new('day07/input.txt', phase) }
 end
 
 options = [5, 6, 7, 8, 9].permutation.to_a
