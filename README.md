@@ -1,7 +1,5 @@
-# advent-of-code-2019
+# advent-of-code
 
-Attempts at solving puzzles posed as part of the 2019 Advent of Code.
+Attempts at solving puzzles posed as part of the Advent of Code.
 
-I am trying to do this in ruby, python, and elixir. The intent here is to strengthen my abilities in ruby, and to learn python and elixir.
-
-All scripts in all languages for a given day can be run by executing `./run 1` where 1 is the day.
+All scripts in all languages for a given day  can be run by executing `./run 1 2019` where 1 is the day and 2019 is the year. Running `./run 1` will default to 2020.
