@@ -8,6 +8,7 @@ class Bitmasker
   def initialize(file_path)
     @file_path = file_path
     @memory = {}
+    @all_positions = []
   end
 
   def apply_mask(value)
@@ -43,6 +44,7 @@ class Bitmasker
       else
         location, value = line.match(/mem\[(\d+)\] = (\d+)/).captures
         positions = apply_mask(location)
+        @all_positions << positions
         positions.each do |position|
           @memory[position] = value.to_i
         end
