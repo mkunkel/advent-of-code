@@ -1,10 +1,8 @@
 #! /usr/bin/env ruby
 require 'awesome_print'
 require 'pry'
-require 'prime'
 
-def depart(busses, increment)
-  start = 0
+def depart(busses, increment, start)
   final_departure = nil
   timestamp = start
 
@@ -13,7 +11,6 @@ def depart(busses, increment)
     timestamp += increment
   end
 
-  puts final_departure
   final_departure
 end
 
@@ -24,33 +21,19 @@ modified = bus_ids.map.with_index do |bus_id, index|
   if bus_id == 'x'
     'x'
   else
-    { bus: bus_id, index: index, factors: bus_id.prime_division.map(&:first) }
+    { bus: bus_id, index: index }
   end
 end
 
 modified.reject! { |mod| mod == 'x' }
-modified.sort! { |a, b| b[:bus] <=> a[:bus] }
-# min = 100000000000000
-# start = (min / head[:bus]).floor * head[:bus]
-# binding.pry
+
 increment = modified.first[:bus]
-
-
-busses = []
-increment = 1
-
+busses = [modified.shift, modified.shift]
+start = depart(busses, increment, 0)
 modified.each do |bus|
+  increment = busses[0..-1].map { |bus| bus[:bus] }.reduce(&:*)
   busses << bus
-  increment = depart(busses, increment)
+  start = depart(busses, increment, start)
 end
 
-  puts increment
-
-# mods = modified.map { |mod| mod[:bus] }
-# remainders = modified.map { |mod| mod[:index] }
-# modulo = remainders.reduce(&:*)
-# modulos = mods.map { |mod| modulo / mod }
-
-# # puts mods.to_s
-# # puts remainders.to_s
-# # puts chinese_remainder(mods, remainders)
+puts start
