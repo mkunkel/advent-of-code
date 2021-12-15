@@ -1,7 +1,6 @@
 #! /usr/bin/env ruby
-raise ArgumentError, 'Must provide day number as argument' unless ARGV[0]
-DAY = ARGV[0].rjust(2, '0')
-YEAR = ARGV[1] || '2020'
+DAY = ARGV[0]? ARGV[0].rjust(2, '0') : Time.now.day
+YEAR = ARGV[1] || Time.now.year
 
 # Leave this in case I choose to add another language later
 languages = [
@@ -13,7 +12,12 @@ languages = [
   languages.each do |language|
     file = "#{YEAR}/day#{DAY}/#{part}#{language[:extension]}"
     lines = File.read(file).split("\n")
-    output = lines.count > 1 ? `#{file}` : "Not completed"
-    puts "#{language[:name].ljust(6, ' ')} part #{part}: #{output}"
+    before = Time.now
+    output = `#{file}`
+    output = "Not completed" if output.empty?
+    after = Time.now
+    elapsed = (after - before) * 1000.0
+    puts "#{language[:name].ljust(6, ' ')} part #{part} took #{elapsed}ms:\n#{output}"
+    puts if part == 1
   end
 end
